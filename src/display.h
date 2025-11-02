@@ -72,7 +72,7 @@ void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
                       double secs = 0.0);
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
-                  int i2c_bus, int reset_gpio, int spi_dc_gpio, int spi_cs,
+                  int i2c_bus, int reset_gpio,
                   bool rotate180 = false);
 
 #endif // DISPLAY_H

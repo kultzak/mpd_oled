@@ -95,7 +95,7 @@ class OledOpts : public ProgramOpts {
 public:
   const double DEF_SCROLL_RATE = 8;    // pixels per second
   const double DEF_SCROLL_DELAY = 5;   // second delay before scrolling
-  int oled = OLED_ADAFRUIT_SPI_128x32; // OLED type, as a number
+  int oled = OLED_SH1106_I2C_128x64; // OLED type, as a number
   int framerate = 15;                  // frame rate in Hz
   int bars = 16;                       // number of bars in spectrum
   int gap = 1;                         // gap between bars, in pixels
@@ -111,8 +111,6 @@ public:
   unsigned char i2c_addr = 0;    // number of I2C address
   int i2c_bus = 1;               // number of I2C bus
   int reset_gpio = 25;           // reset pin
-  int spi_dc_gpio = OLED_SPI_DC; // SPI DC
-  int spi_cs = OLED_SPI_CS0;     // SPI CS - 0: CS0, 1: CS1
   Player player;
 
   OledOpts() : ProgramOpts("mpd_oled", "0.02")
@@ -170,9 +168,7 @@ Options
              may help avoid screen burn
   -a <addr>  I2C address, in hex (default: default for OLED type)
   -B num     I2C bus number (default: 1, giving device /dev/i2c-1)
-  -r <gpio>  I2C/SPI reset GPIO number, if needed (default: 25)
-  -D <gpio>  SPI DC GPIO number (default: 24)
-  -S <num>   SPI CS number (default: 0)
+  -r <gpio>  I2C reset GPIO number, if needed (default: 25)
   -p <plyr>  Player: mpd, moode, volumio, runeaudio (default: detected)
 Example :
 %s -o 6 use a %s OLED
@@ -331,20 +327,6 @@ void OledOpts::process_command_line(int argc, char **argv)
               c);
       break;
 
-    case 'D':
-      print_status_or_exit(read_int(optarg, &spi_dc_gpio), c);
-      if (!isdigit(optarg[0]) || reset_gpio < 0 || reset_gpio > 99)
-        error("probably invalid (not integer in range 0 - 99), specify the\n"
-              "GPIO number of the pin that SPI DC is connected to",
-              c);
-      break;
-
-    case 'S':
-      print_status_or_exit(read_int(optarg, &spi_cs), c);
-      if (spi_cs < 0 || spi_cs > 1)
-        error("SPI CS should be 0 or 1", c);
-      break;
-
     case 'p': {
       // const char *params = "mpd|moode|volumio|runeaudio\n";
       string params = Player::all_names("|");
@@ -443,9 +425,9 @@ void draw_clock(ArduiPi_OLED &display, const display_info &disp_info)
   display.clearDisplay();
   // const int H = 8;  // character height
   const int W = 6; // character width
-  draw_text(display, 22, 0, 16, disp_info.conn.get_ip_addr());
+  draw_text(display, 23, 0, 16, disp_info.conn.get_ip_addr());
   draw_connection(display, 128 - 2 * W, 0, disp_info.conn);
-  draw_time(display, 4, 16, 4, disp_info.clock_format);
+  draw_time(display, 8, 16, 4, disp_info.clock_format);
   draw_date(display, 32, 56, 1, disp_info.date_format);
 }
 
@@ -628,7 +610,7 @@ int main(int argc, char **argv)
 
   // Set up the OLED doisplay
   if (!init_display(display, opts.oled, opts.i2c_addr, opts.i2c_bus,
-                    opts.reset_gpio, opts.spi_dc_gpio, opts.spi_cs,
+                    opts.reset_gpio,
                     opts.rotate180))
     opts.error("could not initialise OLED");
 
